@@ -92,8 +92,8 @@ def localizacion(balizas, real, ideal, centro, radio, mostrar=0):
         plt.colorbar(label='Peso')  # Añadir barra de colores
         balT = np.array(balizas).T.tolist()
         plt.plot(balT[0], balT[1], 'or', ms=10)
-        plt.plot(ideal.x, ideal.y, 'D', c='#ff00ff', ms=10, mew=2)
         plt.plot(real.x, real.y, 'D', c='#00ff00', ms=10, mew=2)
+        plt.plot(ideal.x, ideal.y, 'D', c='#ff00ff', ms=10, mew=2)
         plt.show()
         input()
         plt.clf()
@@ -156,6 +156,16 @@ espacio = 0.
 random.seed(int(datetime.now().timestamp()))
 for punto in objetivos:
     while distancia(tray_ideal[-1], punto) > EPSILON and len(tray_ideal) <= 1000:
+        # Imprimir el estado actual
+        print(f"Tiempo: {tiempo / FPS:.2f}s")
+        print(f"Distancia al objetivo: {distancia(tray_ideal[-1], punto):.2f}m")
+        # Corrección de posición basada en la probabilidad de medición
+        measurement_prob = ideal.measurement_prob(real.sense(objetivos), objetivos)
+        print(f'Distancia entre robots: {measurement_prob}')
+        if measurement_prob > UMBRAL:
+            print("REALIZANDO CORRECIÓN DE POSICIÓN...")
+            localizacion(objetivos, real, ideal, [ideal.x, ideal.y], radio_inicial, mostrar=0)
+        
         pose = ideal.pose()
 
         w = angulo_rel(pose, punto)
@@ -177,18 +187,6 @@ for punto in objetivos:
         tray_ideal.append(ideal.pose())
         tray_real.append(real.pose())
 
-        # Imprimir el estado actual
-        print(f"Tiempo: {tiempo / FPS:.2f}s, Espacio: {espacio:.2f}m")
-        print(f"Distancia al objetivo: {distancia(tray_ideal[-1], punto):.2f}m")
-
-        
-        # Corrección de posición basada en la probabilidad de medición
-        measurement_prob = ideal.measurement_prob(real.sense(objetivos), objetivos)
-        print(f'Distancia entre robots: {measurement_prob}')
-        if measurement_prob > UMBRAL:
-            print("REALIZANDO CORRECIÓN DE POSICIÓN...")
-            localizacion(objetivos, real, ideal, [ideal.x, ideal.y], radio_inicial, mostrar=0)
-        
         espacio += v
         tiempo += 1
 
